@@ -30,6 +30,10 @@ seconds; that one starts a local Ray instance for its mini-sweep and adds a minu
 | `verify_models.py` | BIO constraint masks, the architecture registry, custom factories |
 | `verify_training.py` | row conversion, `training_arguments`, and linear + CRF training end to end |
 | `verify_evaluation.py` | span reconstruction, nervaluate scoring, character metrics, token metrics |
+| `verify_analysis.py` | strict event accounting, training provenance, canonical evaluation parquet |
+| `verify_analysis_deep.py` | diagnostic matching, exposure, zero-shot, subgroup metrics, entity features |
+| `verify_analysis_publication.py` | oracle ceilings, document bootstrap, scientific SVG reports |
+| `verify_analysis_documentation.py` | analysis API/schema documentation and explicit no-CLI contract |
 | `verify_assessment.py` | `train_model`: fold rotation, both split modes, manifests, aggregation |
 | `verify_hpo.py` | search-space forms, variants, trial scoring, OOM handling, a real two-trial Ray sweep, the winner block re-run through `train_model` |
 | `verify_inference.py` | span decoding, `predict_entities` end to end, scoring against gold and against a reference |

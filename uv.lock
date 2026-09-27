@@ -1116,11 +1116,13 @@ dependencies = [
     { name = "numpy", version = "2.5.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
     { name = "pandas", version = "2.3.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "pandas", version = "3.0.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "pydantic" },
     { name = "pyarrow" },
     { name = "pysbd" },
     { name = "pyyaml" },
     { name = "rapidfuzz" },
     { name = "transformers" },
+    { name = "typer" },
 ]
 
 [package.optional-dependencies]
@@ -1185,6 +1187,7 @@ requires-dist = [
     { name = "pandas" },
     { name = "pyarrow", specifier = ">=24.0.0" },
     { name = "pysbd", specifier = ">=0.3.4" },
+    { name = "pydantic", specifier = ">=2.0" },
     { name = "pytorch-crf", marker = "extra == 'ner'", specifier = ">=0.7.2" },
     { name = "pyyaml", specifier = ">=6.0" },
     { name = "rapidfuzz", specifier = ">=3.0" },
@@ -1194,6 +1197,7 @@ requires-dist = [
     { name = "torch", marker = "extra == 'torch'", specifier = "==2.10.0" },
     { name = "tqdm", marker = "extra == 'nel'", specifier = ">=4.66" },
     { name = "transformers" },
+    { name = "typer", specifier = ">=0.12" },
 ]
 provides-extras = ["torch", "ner", "nel", "all"]
 

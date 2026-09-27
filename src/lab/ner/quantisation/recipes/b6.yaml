@@ -1,0 +1,7 @@
+# Replace SOURCE_MODEL before running.
+model: SOURCE_MODEL
+method:
+  name: student-reduced-ffn
+output:
+  path: artifacts/b6
+status: REQUIRES_TRAINING

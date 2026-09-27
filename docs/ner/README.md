@@ -46,3 +46,8 @@ Everything else keeps its subpackage path — `lab.ner.encoding`, `lab.ner.model
 `lab.ner.training`, `lab.ner.evaluation`, `lab.ner.hpo` — and so do the nine above, so
 `from lab.ner.training import train_model` remains correct. Names on `lab.ner` resolve on
 first use, so `import lab.ner` loads nothing.
+
+## Compression
+
+[Transformer compression and quantisation](quantisation/README.md) documents checkpoint
+inspection, safe artifact generation, scientific metadata, implemented methods, and limitations.

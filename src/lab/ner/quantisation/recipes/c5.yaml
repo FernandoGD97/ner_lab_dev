@@ -1,0 +1,7 @@
+# Replace SOURCE_MODEL before running.
+model: SOURCE_MODEL
+method:
+  name: distillation+vocabulary-pruning
+output:
+  path: artifacts/c5
+status: REQUIRES_TRAINING

@@ -1,0 +1,7 @@
+# Replace SOURCE_MODEL before running.
+model: SOURCE_MODEL
+method:
+  name: depth-reduction-4
+output:
+  path: artifacts/b3
+status: REQUIRES_TRAINING

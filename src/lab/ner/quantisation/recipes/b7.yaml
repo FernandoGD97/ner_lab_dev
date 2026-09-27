@@ -1,0 +1,7 @@
+# Replace SOURCE_MODEL before running.
+model: SOURCE_MODEL
+method:
+  name: structured-pruning
+output:
+  path: artifacts/b7
+status: REQUIRES_TRAINING

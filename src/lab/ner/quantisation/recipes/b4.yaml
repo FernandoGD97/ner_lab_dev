@@ -1,0 +1,7 @@
+# Replace SOURCE_MODEL before running.
+model: SOURCE_MODEL
+method:
+  name: student-hidden-512
+output:
+  path: artifacts/b4
+status: REQUIRES_TRAINING

@@ -1,0 +1,24 @@
+references:
+  knowledge_distillation: {title: "Distilling the Knowledge in a Neural Network", url: "https://arxiv.org/abs/1503.02531"}
+  distilbert: {title: "DistilBERT", url: "https://arxiv.org/abs/1910.01108"}
+  tinybert: {title: "TinyBERT", url: "https://arxiv.org/abs/1909.10351"}
+  mobilebert: {title: "MobileBERT", url: "https://arxiv.org/abs/2004.02984"}
+  minilm: {title: "MiniLM", url: "https://arxiv.org/abs/2002.10957"}
+  albert: {title: "ALBERT", url: "https://arxiv.org/abs/1909.11942"}
+  q_bert: {title: "Q-BERT", url: "https://arxiv.org/abs/1909.05840"}
+  ternarybert: {title: "TernaryBERT", url: "https://arxiv.org/abs/2009.12812"}
+  i_bert: {title: "I-BERT", url: "https://arxiv.org/abs/2101.01321"}
+  binarybert: {title: "BinaryBERT", url: "https://arxiv.org/abs/2012.15701"}
+  zeroquant: {title: "ZeroQuant", url: "https://arxiv.org/abs/2206.01861"}
+  movement_pruning: {title: "Movement Pruning", url: "https://arxiv.org/abs/2005.07683"}
+  block_pruning: {title: "Block Pruning For Faster Transformers", url: "https://arxiv.org/abs/2109.04838"}
+  cofi: {title: "CoFi", url: "https://arxiv.org/abs/2204.00408"}
+  power_bert: {title: "PoWER-BERT", url: "https://arxiv.org/abs/2001.08950"}
+  deebert: {title: "DeeBERT", url: "https://arxiv.org/abs/2004.12993"}
+  pabee: {title: "PABEE", url: "https://arxiv.org/abs/2002.02861"}
+  kroneckerbert: {title: "KroneckerBERT", url: "https://arxiv.org/abs/2109.06243"}
+  multilingual_vocab: {title: "On the Language Neutrality of Pre-trained Multilingual Representations", url: "https://arxiv.org/abs/2004.05160"}
+  compact_biomedical: {title: "Bioformer", url: "https://arxiv.org/abs/2302.01588"}
+  gptq: {title: "GPTQ", url: "https://arxiv.org/abs/2210.17323", note: "Evidence is primarily decoder-only LLMs."}
+  smoothquant: {title: "SmoothQuant", url: "https://arxiv.org/abs/2211.10438", note: "Evidence is primarily decoder-only LLMs."}
+  awq: {title: "AWQ", url: "https://arxiv.org/abs/2306.00978", note: "Evidence is primarily decoder-only LLMs."}

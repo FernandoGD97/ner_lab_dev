@@ -1120,6 +1120,7 @@ dependencies = [
     { name = "pyarrow" },
     { name = "pysbd" },
     { name = "pyyaml" },
+    { name = "rapidfuzz" },
     { name = "transformers" },
     { name = "typer" },
 ]
@@ -1189,6 +1190,7 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.0" },
     { name = "pytorch-crf", marker = "extra == 'ner'", specifier = ">=0.7.2" },
     { name = "pyyaml", specifier = ">=6.0" },
+    { name = "rapidfuzz", specifier = ">=3.0" },
     { name = "ray", extras = ["tune"], marker = "extra == 'ner'", specifier = ">=2.56.1" },
     { name = "scikit-learn", marker = "extra == 'nel'", specifier = ">=1.3" },
     { name = "sentence-transformers", marker = "extra == 'nel'", specifier = ">=3.0" },

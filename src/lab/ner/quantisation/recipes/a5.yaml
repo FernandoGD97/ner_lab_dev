@@ -1,0 +1,7 @@
+# Replace SOURCE_MODEL before running.
+model: SOURCE_MODEL
+method:
+  name: int4
+output:
+  path: artifacts/a5
+status: UNSUPPORTED

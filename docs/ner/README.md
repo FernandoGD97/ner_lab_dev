@@ -11,6 +11,7 @@ by `lab[ner]`.
 | [search-hyperparameters.md](search-hyperparameters.md) | `search_hyperparameters`: the Ray Tune + Optuna sweep and its search space |
 | [predict-entities.md](predict-entities.md) | `predict_entities`: inference with a saved model, and scoring it |
 | [library.md](library.md) | The pieces the orchestrators are built from: `Encoder`, `build_model`, `training_arguments`, `train`, the metrics builders |
+| [`src/lab/ner/analysis/README.md`](../../src/lab/ner/analysis/README.md) | Post-inference diagnostic analysis, canonical Parquet, uncertainty, oracles, and scientific figures; Python API only (no analysis CLI currently exists) |
 
 | CLI task | Function |
 |---|---|
@@ -45,3 +46,8 @@ Everything else keeps its subpackage path — `lab.ner.encoding`, `lab.ner.model
 `lab.ner.training`, `lab.ner.evaluation`, `lab.ner.hpo` — and so do the nine above, so
 `from lab.ner.training import train_model` remains correct. Names on `lab.ner` resolve on
 first use, so `import lab.ner` loads nothing.
+
+## Compression
+
+[Transformer compression and quantisation](quantisation/README.md) documents checkpoint
+inspection, safe artifact generation, scientific metadata, implemented methods, and limitations.

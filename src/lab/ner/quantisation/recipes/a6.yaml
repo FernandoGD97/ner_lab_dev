@@ -1,0 +1,7 @@
+# Replace SOURCE_MODEL before running.
+model: SOURCE_MODEL
+method:
+  name: vocabulary-pruning
+output:
+  path: artifacts/a6
+status: READY

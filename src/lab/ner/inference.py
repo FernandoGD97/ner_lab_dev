@@ -210,6 +210,27 @@ def load_model(
     model_dir = Path(model_dir).resolve()
     description = read_model_encoding(model_dir)
 
+    compression_manifest = model_dir / "compression_manifest.json"
+    backend = None
+    if compression_manifest.exists():
+        backend = json.loads(compression_manifest.read_text(encoding="utf-8")).get("backend")
+
+    if backend == "pytorch_dynamic_int8":
+        from lab.ner.quantisation.quantization.int8 import load_dynamic_int8
+
+        model = load_dynamic_int8(model_dir)
+        tokenizer = AutoTokenizer.from_pretrained(model_dir)
+        model.eval()
+        return model, tokenizer, description
+
+    if backend == "pytorch_low_rank":
+        from lab.ner.quantisation.low_rank.svd import load_low_rank
+
+        model, tokenizer = load_low_rank(model_dir)
+        model.to(resolve_device(device))
+        model.eval()
+        return model, tokenizer, description
+
     tokenizer = AutoTokenizer.from_pretrained(model_dir)
     label2id = description["encoding"]["label2id"]
     id2label = {int(index): label for label, index in label2id.items()}

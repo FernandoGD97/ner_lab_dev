@@ -1,0 +1,7 @@
+# Replace SOURCE_MODEL before running.
+model: SOURCE_MODEL
+method:
+  name: bf16
+output:
+  path: artifacts/a2
+status: READY

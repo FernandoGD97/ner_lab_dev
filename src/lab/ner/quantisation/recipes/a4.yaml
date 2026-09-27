@@ -1,0 +1,7 @@
+# Replace SOURCE_MODEL before running.
+model: SOURCE_MODEL
+method:
+  name: int8-static
+output:
+  path: artifacts/a4
+status: EXPERIMENTAL

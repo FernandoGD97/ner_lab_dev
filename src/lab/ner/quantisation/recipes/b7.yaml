@@ -1,0 +1,9 @@
+# Replace SOURCE_MODEL before running.
+model: SOURCE_MODEL
+method:
+  name: structured-pruning
+  head_amount: 0.25
+  ffn_amount: 0.25
+output:
+  path: artifacts/b7
+status: READY

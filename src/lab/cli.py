@@ -83,6 +83,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     tasks_parser.set_defaults(handler=tasks)
 
+    # Imported through importlib so the central CLI keeps its namespace layering:
+    # compression dependencies are resolved only while constructing this command group.
+    import importlib
+
+    importlib.import_module("lab.ner.quantisation.cli").add_parser(subparsers)
+
     return parser
 
 

@@ -1,0 +1,10 @@
+# Replace SOURCE_MODEL before running.
+model: SOURCE_MODEL
+method:
+  name: int8-static
+  calibration_corpus: CALIBRATION_CORPUS.parquet
+  calibration_samples: 128
+  calibration_seed: 42
+output:
+  path: artifacts/a4
+status: READY

@@ -34,3 +34,10 @@ Rules of thumb when updating:
 - Anything not yet decided is an open question in **ROADMAP.md**, not an assumption in code.
 - A parameter that changes name, default or meaning changes its subpackage's page in the
   same commit. Those pages are the parameter reference; drift there is a bug.
+
+## Transformer compression
+
+The NER documentation includes the complete
+[`lab quantisation` user and developer manual](ner/quantisation/README.md), including CLI,
+artifacts, controlled experiments, measurement methodology, analysis, Entity Linking, tutorials,
+and extension guidance.

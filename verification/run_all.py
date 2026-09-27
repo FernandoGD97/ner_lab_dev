@@ -6,7 +6,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-SCRIPTS = ("verify_layering.py", "verify_data.py", "verify_encoding.py", "verify_encoder.py", "verify_models.py", "verify_training.py", "verify_evaluation.py", "verify_assessment.py", "verify_hpo.py", "verify_inference.py", "verify_nel.py")
+SCRIPTS = ("verify_layering.py", "verify_data.py", "verify_encoding.py", "verify_encoder.py", "verify_models.py", "verify_training.py", "verify_evaluation.py", "verify_assessment.py", "verify_hpo.py", "verify_inference.py", "verify_nel.py") + tuple(str(path.relative_to(Path(__file__).parent)) for path in sorted((Path(__file__).parent / "quantisation").glob("verify_*.py")))
 
 
 def main() -> int:

@@ -1,0 +1,7 @@
+# Replace SOURCE_MODEL before running.
+model: SOURCE_MODEL
+method:
+  name: distillation
+output:
+  path: artifacts/b8
+status: REQUIRES_TRAINING

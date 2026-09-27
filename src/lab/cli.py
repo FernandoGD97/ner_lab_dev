@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import importlib
 from pathlib import Path
 from typing import Any, Sequence
 
@@ -56,6 +57,50 @@ def tasks(args: argparse.Namespace) -> None:
         print(f"{name:<{width}}{note}")
 
 
+def finalize_explicability(args: argparse.Namespace) -> None:
+    finalize_run = importlib.import_module("lab.ner.explicability").finalize_run
+    finalize_run(
+        args.run_directory,
+        completed_analyses=args.completed_analysis,
+        required_outputs=args.required_output,
+        mandatory_analyses=args.mandatory_analysis,
+    )
+
+
+def analyze_explicability(args: argparse.Namespace) -> None:
+    run_analyses = importlib.import_module(
+        "lab.ner.explicability.analyses"
+    ).run_analyses
+    run_analyses(args.run_directory)
+
+
+def plot_explicability(args: argparse.Namespace) -> None:
+    generate_figures = importlib.import_module(
+        "lab.ner.explicability.visualization"
+    ).generate_figures
+    generate_figures(
+        args.run_directory,
+        profile_name=args.profile,
+        analysis=args.analysis,
+        figure_id=args.figure,
+        animations=not args.no_animation,
+    )
+
+
+def animate_explicability(args: argparse.Namespace) -> None:
+    regenerate = importlib.import_module(
+        "lab.ner.explicability.visualization.animations"
+    ).regenerate_animation
+    regenerate(args.run_directory)
+
+
+def compare_explicability(args: argparse.Namespace) -> None:
+    module = importlib.import_module("lab.ner.explicability.visualization.comparison")
+    config_type = importlib.import_module("lab.ner.explicability.config").VisualizationConfig
+    module.compare_runs(args.run_directories, args.output_directory,
+                        config_type(profile=args.profile))
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="lab",
@@ -82,6 +127,51 @@ def build_parser() -> argparse.ArgumentParser:
         "tasks", help="List every task, marking those whose extra is not installed."
     )
     tasks_parser.set_defaults(handler=tasks)
+
+    explicability_parser = subparsers.add_parser(
+        "explicability", help="Manage representation-analysis artifacts."
+    )
+    explicability_subparsers = explicability_parser.add_subparsers(
+        dest="explicability_command", metavar="<command>"
+    )
+    finalize_parser = explicability_subparsers.add_parser(
+        "finalize", help="Validate and finalize an already-trained run."
+    )
+    finalize_parser.add_argument("run_directory")
+    finalize_parser.add_argument("--completed-analysis", action="append", default=[])
+    finalize_parser.add_argument("--mandatory-analysis", action="append", default=None)
+    finalize_parser.add_argument("--required-output", action="append", default=None)
+    finalize_parser.set_defaults(handler=finalize_explicability)
+
+    analyze_parser = explicability_subparsers.add_parser(
+        "analyze", help="Transform snapshots into Part 2 Parquet analyses."
+    )
+    analyze_parser.add_argument("run_directory")
+    analyze_parser.set_defaults(handler=analyze_explicability)
+
+    plot_parser = explicability_subparsers.add_parser(
+        "plot", help="Regenerate Part 3 SVG figures and report from Parquet."
+    )
+    plot_parser.add_argument("run_directory")
+    plot_parser.add_argument("--profile", choices=("paper", "presentation"), default=None)
+    plot_parser.add_argument("--analysis", default=None)
+    plot_parser.add_argument("--figure", default=None)
+    plot_parser.add_argument("--no-animation", action="store_true")
+    plot_parser.set_defaults(handler=plot_explicability)
+
+    animate_parser = explicability_subparsers.add_parser(
+        "animate", help="Regenerate temporal animation from projection Parquet."
+    )
+    animate_parser.add_argument("run_directory")
+    animate_parser.set_defaults(handler=animate_explicability)
+
+    compare_parser = explicability_subparsers.add_parser(
+        "compare", help="Compare completed runs from permanent fingerprint tables."
+    )
+    compare_parser.add_argument("output_directory")
+    compare_parser.add_argument("run_directories", nargs="+")
+    compare_parser.add_argument("--profile", choices=("paper", "presentation"), default="paper")
+    compare_parser.set_defaults(handler=compare_explicability)
 
     return parser
 

@@ -74,6 +74,7 @@ def train_model(
     overwrite: bool = False,
     folds: Sequence[int] | None = None,
     random_state: int | None = None,
+    explicability: Mapping[str, Any] | None = None,
 ) -> AssessmentResult:
     """
     Train one configuration against the split in `split_dir` and record what it scored.
@@ -220,6 +221,9 @@ def train_model(
                 architecture=architecture,
                 architecture_kwargs=architecture_kwargs,
             ),
+            explicability=explicability,
+            explicability_model_name=base_model,
+            explicability_dataset=str(partitions["validation"]),
         )
 
         summaries.append(result.summary)

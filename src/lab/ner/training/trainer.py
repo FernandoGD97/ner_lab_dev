@@ -111,6 +111,9 @@ def train(
     track_resources: bool = False,
     run_metadata: dict[str, Any] | None = None,
     model_encoding: Mapping[str, Any] | None = None,
+    explicability: Mapping[str, Any] | Any | None = None,
+    explicability_model_name: str | None = None,
+    explicability_dataset: str | None = None,
 ) -> TrainingResult:
     """
     Train `model` on encoded rows and return everything the run produced.
@@ -179,6 +182,27 @@ def train(
     )
     trainer.add_callback(metrics_logger)
 
+    from lab.ner.explicability.config import resolve_config
+
+    explicability_config = resolve_config(explicability)
+    explicability_callback = None
+    explicability_root = None
+
+    if explicability_config.enabled:
+        from lab.ner.explicability.finalize import initialize_run
+        from lab.ner.explicability.hooks import ExplicabilityCallback
+
+        explicability_root = initialize_run(
+            output_dir, explicability_config, model=explicability_model_name,
+            dataset=explicability_dataset,
+        )
+        explicability_callback = ExplicabilityCallback(
+            trainer, tokenizer, validation_rows, explicability_root,
+            explicability_config.snapshots, model_name=explicability_model_name,
+            capture_parameters=explicability_config.analyses.parameter_drift,
+        )
+        trainer.add_callback(explicability_callback)
+
     tracker = ResourceTracker() if track_resources else None
     resources = None
     paths: dict[str, Path] = {}
@@ -187,7 +211,12 @@ def train(
         tracker.start()
 
     try:
+        if explicability_callback is not None:
+            explicability_callback.capture_pretrained()
         train_output = trainer.train()
+
+        if explicability_callback is not None:
+            explicability_callback.capture_final(trainer.state.epoch, trainer.state.global_step)
 
         if tracker is not None:
             resources = tracker.stop()
@@ -208,6 +237,13 @@ def train(
 
             if model_encoding is not None:
                 paths["model_encoding"] = write_model_encoding(model_encoding, best_model_dir)
+    except BaseException:
+        if explicability_callback is not None:
+            from lab.ner.explicability.finalize import update_training_manifest
+            update_training_manifest(
+                explicability_root, explicability_callback.snapshots, succeeded=False
+            )
+        raise
     finally:
         if tracker is not None:
             resources = tracker.stop()
@@ -227,6 +263,12 @@ def train(
     summary_path = output_dir / SUMMARY_FILENAME
     summary_path.write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
     paths["summary"] = summary_path
+
+    if explicability_callback is not None:
+        from lab.ner.explicability.finalize import update_training_manifest
+        paths["explicability_manifest"] = update_training_manifest(
+            explicability_root, explicability_callback.snapshots, succeeded=True
+        )
 
     return TrainingResult(
         trainer=trainer,

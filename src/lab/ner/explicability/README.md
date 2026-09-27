@@ -1,197 +1,133 @@
-# NER explicability: Part 1
+# NER explicability
 
-This package captures the same validation observations before fine-tuning and at
-successive training states. It deliberately performs no dimensionality reduction
-or scientific analysis. CKA, aligned UMAP, geometry, probing, attribution and
-figures belong to Parts 2 and 3.
+`lab.ner.explicability` records how a pretrained Transformer changes while it is
+fine-tuned for named-entity recognition (NER), derives compact scientific tables,
+and turns those tables into validated SVG figures and an HTML report.
 
-## Integration and lifecycle
+The scientific questions are longitudinal: how far representations move, which
+layers change, whether entity classes become more compact or separable, when
+examples are learned or forgotten, and where parameter updates accumulate. The
+same stable observations are followed from `step_000_pretrained`, through numbered
+training snapshots, to `step_final`.
 
-`lab.ner.training.train` remains the only training pipeline. When explicability is
-disabled (the default), it builds no callback and writes no explicability files.
-When enabled, an `ExplicabilityCallback` captures `step_000_pretrained` immediately
-before `Trainer.train()`, then captures after each evaluation or epoch. It reuses
-the encoded validation rows and the in-memory model; normal evaluation remains
-unchanged. A final `step_final` snapshot records the weights `Trainer` leaves
-loaded (the selected best checkpoint under the repository defaults).
+> **CLI implementation note:** the local project uses Python `argparse`, not Typer.
+> The installed executable is `lab`. There is no `ner` executable and there are no
+> hidden command aliases. This documentation uses the commands that actually exist.
 
-Each forward pass runs under `torch.inference_mode()`. Hidden states are detached,
-moved to CPU, cast to the configured storage dtype and written a batch at a time.
-No complete corpus-sized tensor is retained in GPU or host memory. The output tree
-is:
+## Quick start
 
-```text
-<run>/explicability/
-  config.yaml
-  manifest.json
-  _snapshots/step_000_pretrained/rank_00000/...
-  tables/ figures/ animations/ examples/ report/
-```
+1. Add `explicability` to the existing `ner.train_model` YAML configuration:
 
-Snapshots are first built under `.step_NNN.incomplete`. Every rank writes only its
-own shard, including a Parquet observation index and compressed NPZ chunks. A
-rank shard and then the snapshot receive `COMPLETE` markers before the snapshot is
-atomically renamed. Interrupted directories therefore cannot be mistaken for
-valid snapshots. Rows are assigned to ranks by `row_index % world_size`; shard
-indices plus `(row_index, token_position)` provide deterministic global ordering
-without gathering embeddings on rank zero.
+   ```yaml
+   task: ner.train_model
+   # Existing train_model keys such as split_dir, output_dir, base_model,
+   # target_label, and language remain required.
+   explicability:
+     enabled: true
+     snapshots:
+       trigger: evaluation
+       split: validation
+       embedding_scope: last_hidden_state
+       dtype: float16
+       cleanup_policy: on_success
+   ```
 
-Compressed, independently readable NPZ chunks were selected because NumPy is an
-existing dependency while Zarr/numcodecs are not. This provides bounded-memory
-incremental writes, compression, interruption isolation and simple HPC shards.
-Part 2 can stream them with `iter_chunks`. High-dimensional embeddings are never
-stored in Parquet. Permanent, narrow analytical tables use atomic ZSTD Parquet
-through `write_table`, with stable sorting supplied by each table's schema.
+2. Train through the existing task runner:
 
-## Configuration
+   ```bash
+   lab run train.yaml
+   ```
 
-The existing task YAML accepts this additional top-level argument:
+3. Produce permanent analytical tables, figures, and the report:
 
-```yaml
-explicability:
-  enabled: true
-  snapshots:
-    trigger: evaluation       # evaluation | epoch
-    split: validation
-    embedding_scope: last_hidden_state # selected_layers | all_hidden_states
-    selected_layers: []
-    dtype: float16            # float16 | float32
-    include_all_examples: true
-    include_all_tokens: true
-    cleanup_policy: on_success # on_success | never
-    disk_safety_margin_bytes: 2147483648
-  analyses:
-    temporal_projection: true
-    trajectories: true
-    centroid_dynamics: true
-    cka: true
-    geometry: true
-    intrinsic_dimension: true
-    neighborhoods: true
-    training_dynamics: true
-    forgetting: true
-    transitions: true
-    probing: true
-    parameter_drift: true
-    performance_relationships: true
-    svcca: false
-    pwcca: false
-    attribution: false
-    influence: false
-    topology: false
-  visualization:
-    profile: paper            # paper | presentation
-    static_format: svg
-    optional_formats:
-      pdf: false
-      png: false
-    palette: okabe_ito
-    background: white
-    grid: false
-    spines:
-      top: false
-      right: false
-    legend:
-      smart_position: true
-      outside_when_dense: true
-    rasterization:
-      dense_scatter: true
-      dpi: 600
-```
+   ```bash
+   lab explicability analyze RUN_DIRECTORY
+   lab explicability plot RUN_DIRECTORY --profile paper
+   lab explicability finalize RUN_DIRECTORY
+   ```
 
-`include_all_examples=false` is reserved and rejected by behavior (Part 1 never
-scientifically samples). `include_all_tokens=false` retains the model positions
-on which gold labels are defined. Layer zero is the embedding output and the last
-index is the final Transformer layer.
+`analyze` and `plot` are deliberately manual. Successful training records that
+post-processing is pending; it does not silently run expensive analyses or delete
+snapshots. `finalize` validates registered outputs, writes `SUCCESS`, and removes
+`_snapshots/` only when `cleanup_policy: on_success` and every check succeeds.
 
-## Identity, pooling, and size checks
+## What happens during training
 
-SHA-256-derived IDs encode document, window, token position/ID and offsets.
-Observation metadata includes token and word identity, character offsets, gold
-and predicted BIO labels/types, confidence, entropy, gold margin and correctness.
-Reusable document text is not copied. `pool_groups` implements first-subword,
-mean and max word pooling; `pool_spans` provides the same mechanics for gold or
-predicted character-offset spans. The existing BIO span reconstruction remains
-the authoritative way to obtain spans.
-
-Before any chunk is written, the conservative estimate is:
+When `enabled: true`, the existing Hugging Face Trainer receives an
+`ExplicabilityCallback`. The sequence is:
 
 ```text
-observations * hidden_size * stored_layers * bytes_per_element
-  * (1 + metadata_overhead_fraction)
+build pretrained model
+→ capture step_000_pretrained on the validation rows
+→ run normal training/evaluation
+→ capture step_NNN after each configured evaluation or epoch
+→ Trainer restores its final/best weights
+→ capture step_final
+→ record awaiting_postprocessing in manifest.json
 ```
 
-The check logs expected bytes, current snapshot usage, projected usage, free
-filesystem bytes and the safety margin, and raises before extraction if the new
-snapshot plus margin does not fit.
+Extraction runs under inference mode and writes CPU chunks incrementally; the
+complete corpus is not retained in GPU memory. With explicability disabled (the
+default), no callback or explicability directory is created.
 
-## Recovery and cleanup guarantees
+## Command tree
 
-Successful training records `awaiting_postprocessing`; Part 1 does **not** claim
-that future analyses exist and does not automatically clean snapshots. Parts 2/3
-will register mandatory analyses and required outputs, then either call
-`finalize_run` or use:
-
-```bash
-lab explicability finalize RUN_DIRECTORY \
-  --completed-analysis NAME \
-  --mandatory-analysis NAME \
-  --required-output tables/result.parquet
+```text
+lab
+├── run CONFIG [--random-state/--seed N] [--output-dir DIR]
+└── explicability
+    ├── analyze RUN_DIRECTORY
+    ├── plot RUN_DIRECTORY [--profile paper|presentation]
+    │                         [--analysis NAME] [--figure FIGURE_ID]
+    │                         [--no-animation]
+    ├── animate RUN_DIRECTORY
+    ├── compare OUTPUT_DIRECTORY RUN_DIRECTORY [RUN_DIRECTORY ...]
+    │                          [--profile paper|presentation]
+    └── finalize RUN_DIRECTORY [--completed-analysis NAME ...]
+                                  [--mandatory-analysis NAME ...]
+                                  [--required-output RELATIVE_PATH ...]
 ```
 
-Finalization refuses failed training, pending analyses, invalid manifests,
-incomplete snapshots and missing/unreadable required Parquet files. Only after it
-writes the final manifest and `SUCCESS` may `cleanup_policy=on_success` remove
-`_snapshots`. Failures preserve snapshots. Cleanup failure is recorded without
-invalidating permanent outputs or `SUCCESS`; `never` always retains raw data.
+Run `lab explicability <command> --help` for the parser-generated synopsis.
 
-Extraction/write durations and bytes are recorded per shard and snapshot, and
-the manifest records total temporary/permanent sizes and post-processing time.
+## Outputs
 
-## Part 2 analytical processing
+All artifacts live below `<run>/explicability/`:
 
-After successful training, run:
-
-```bash
-lab explicability analyze RUN_DIRECTORY
+```text
+config.yaml                  resolved explicability configuration
+manifest.json                lifecycle, snapshots, analyses, figures, sizes, status
+_snapshots/                  temporary complete embeddings and parameter states
+tables/                      permanent ZSTD Parquet analytical tables
+figures/                     canonical SVG figures grouped by topic
+animations/                  animated SVG; optional MP4 when dependencies exist
+examples/                    reserved case-study artifacts
+report/index.html            searchable scientific report embedding the SVGs
+SUCCESS                      written only by successful finalization
 ```
 
-The command reads the Part 1 configuration and independently executes each enabled
-analysis. It writes ZSTD Parquet tables for shared temporal projection,
-trajectories, centroid dynamics, CKA, geometry, intrinsic dimension, compact kNN
-evolution, dataset cartography, forgetting, transitions, frozen linear probes,
-parameter drift, representation shifts, performance relationships, hard examples,
-and layer specialization. SVCCA and PWCCA are implemented but disabled by default.
+Figures can be regenerated after `_snapshots/` has been removed because plotting
+reads `tables/`, `config.yaml`, and `manifest.json`, not raw embeddings.
 
-Shared PCA is fitted once over all aligned checkpoints. Fixed UMAP fits one common
-mapping, and AlignedUMAP receives explicit identity relations; both require the
-optional `umap-learn` package. Independent per-checkpoint nonlinear maps are never
-interpreted as motion. Sampling is off by default. If `sample_size` is set, the
-pipeline uses an explicit seeded, label-stratified sample and records its policy,
-seed, and size in every output.
+## Documentation
 
-Exact nearest neighbors are calculated in query blocks and only top-k identities
-and summaries are retained. Linear CKA has a sufficient-statistic streaming
-implementation. Analyses process one layer at a time and release its representations
-before proceeding. Covariance spectra, rather than all-pairs matrices, are retained.
+* [CLI reference](docs/cli.md)
+* [Configuration reference](docs/configuration.md)
+* [Lifecycle and recovery workflows](docs/workflow.md)
+* [Outputs and Parquet schemas](docs/outputs.md)
+* [Scientific analyses and metrics](docs/analyses.md)
+* [Visualization, animation, and report](docs/visualization.md)
+* [Storage, disk estimates, DDP, and cleanup](docs/storage.md)
+* [HPC and SLURM guidance](docs/hpc.md)
+* [Troubleshooting](docs/troubleshooting.md)
+* [Developer guide and extension tutorials](docs/developer_guide.md)
+* [Scientific Visualization Guide](SCIENTIFIC_VISUALIZATION_GUIDE.md)
+* [Local scientific reference catalogue](references/README.md)
 
-Frozen probes use ID-hashed train/validation/test assignments shared across every
-layer and checkpoint. Their scores measure decodability, not causal use. Optional
-attribution and TracIn-style influence functions require explicitly selected cases;
-the all-snapshot command refuses to run them corpus-wide. Topology and UMAP remain
-dependency-gated. See `references/` for methodological sources and caveats.
+## Scientific caveats
 
-`analyze` updates the manifest to `analyses_complete` but deliberately does not
-write `SUCCESS` or remove snapshots: Part 3 still needs to validate figures and the
-report before invoking finalization.
-
-## Part 3 publication outputs
-
-`lab explicability plot RUN` consumes only permanent Parquet tables and generates
-canonical SVG figures, the corpus fingerprint table, figure manifest, temporal
-animation, and `report/index.html`. `--profile presentation`, `--analysis NAME`,
-`--figure FIGURE_ID`, and `--no-animation` support deterministic regeneration.
-Selective runs remain partial and cannot trigger cleanup. A complete plotting pass
-validates every generated figure and its source table, then marks visualization
-complete; `lab explicability finalize RUN` validates again before writing `SUCCESS`
-and applying the cleanup policy. See `SCIENTIFIC_VISUALIZATION_GUIDE.md`.
+Dimensionality reduction is a visualization, not evidence of a mechanism. Probe
+scores measure decodability, not causal use. Attention is not automatically an
+explanation. Correlation with F1 does not imply causality. Attribution requires
+faithfulness checks. Representation shifts are meaningful only under stable
+observation matching and a shared/aligned coordinate system.

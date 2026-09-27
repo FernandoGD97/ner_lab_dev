@@ -15,6 +15,10 @@ _EXPORTS: dict[str, str] = {
     "train": "lab.ner.training",
     "train_model": "lab.ner.training",
     "training_arguments": "lab.ner.training",
+    "ExplicabilityConfig": "lab.ner.explicability",
+    "finalize_run": "lab.ner.explicability",
+    "run_analyses": "lab.ner.explicability",
+    "generate_figures": "lab.ner.explicability",
 }
 
 __all__ = sorted(_EXPORTS)
